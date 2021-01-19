@@ -6,7 +6,7 @@ from nonebot.adapters.cqhttp.bot import Bot
 from nonebot.adapters.cqhttp.event import MessageEvent, GroupMessageEvent
 from nonebot.adapters.cqhttp.utils import unescape
 
-from .data_source import word_bank as wb
+from word_bank.data_source import word_bank as wb
 
 wb_matcher = on_message(priority=99)
 
