@@ -47,6 +47,10 @@ class WordBank(object):
                 if key in msg:
                     return self.__data['include'][index][key]
 
+            for key in self.__data['include'].get('0', {}):
+                if key in msg:
+                    return self.__data['include']['0'][key]
+
     def __save(self):
         """
         :return:
