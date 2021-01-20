@@ -128,5 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Data
-bank.json
+# plugin data
+data/*.json
