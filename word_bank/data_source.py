@@ -1,18 +1,16 @@
 import json
 import os
+from typing import Union, List
 
 
-NULL_BANK = {
-    'congruence': {
-        0: {}
-    },
-    'include': {
-        0: {}
-    }
-}
+NULL_BANK = dict(congruence={
+    0: dict()
+}, include={
+    0: dict()
+})
 
 
-class WordBank():
+class WordBank(object):
 
     def __init__(self):
         self.dir_path = os.path.abspath(os.path.join(__file__, "..", "./bank.json"))
@@ -25,16 +23,17 @@ class WordBank():
             self.__data = NULL_BANK
             self.__save()
 
-    def match(self, index: int, msg: str, flags=0):
+    def match(self, index: int, msg: str, flags: int = 0) -> Union[None, List]:
         """
         匹配词条
 
         :param index: 为0时是全局词库
-        :param key:
+        :param msg:
         :param flags: 为1时为允许模糊匹配（in）， 默认为全匹配（==）
         :return:
         """
-        index = str(index)
+        if isinstance(index, int):
+            index = str(index)
         reply = self.__data['congruence'].get(index, {}).get(msg, [])
 
         if not flags or reply:
@@ -51,13 +50,14 @@ class WordBank():
         with open(self.dir_path, 'w') as f:
             json.dump(self.__data, f)
 
-    def set(self, index: int, key: str, value: str, flags=0):
+    def set(self, index: int, key: str, value: str, flags: int = 0) -> bool:
         """
         新增词条
 
         :param index: 为0时是全局词库
         :param key:
-        :param value: 为1时是模糊匹配（in）， 默认为全匹配（==）
+        :param value:
+        :param flags: 为1时是模糊匹配（in）， 默认为全匹配（==）
         :return:
         """
         index = str(index)
@@ -74,7 +74,7 @@ class WordBank():
         self.__save()
         return True
 
-    def delete(self, index: int, key: str):
+    def delete(self, index: int, key: str) -> bool:
         """
         删除词条
 
@@ -95,7 +95,7 @@ class WordBank():
 
         return False
 
-    def clean(self, index: int):
+    def clean(self, index: int) -> bool:
         """
         清空某个对象的词库
 
