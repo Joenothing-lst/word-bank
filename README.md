@@ -1,4 +1,4 @@
-# word_bank
+# nonebot-plugin-wordbank
 
 - 基于[nonebot2](https://github.com/nonebot/nonebot2)
 
