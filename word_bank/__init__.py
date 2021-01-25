@@ -1,7 +1,7 @@
 import re
 import random
 
-from nonebot import on_command, on_message
+from nonebot import on_command, on_message, export
 from nonebot.permission import SUPERUSER
 from nonebot.adapters.cqhttp.bot import Bot
 from nonebot.adapters.cqhttp.event import MessageEvent, GroupMessageEvent
@@ -11,6 +11,8 @@ from nonebot.adapters.cqhttp.permission import GROUP_OWNER, GROUP_ADMIN, PRIVATE
 
 from .data_source import word_bank as wb
 
+
+export().word_bank = wb
 
 wb_matcher = on_message(priority=99)
 
