@@ -14,7 +14,7 @@
 - 通过 pip 从 [PyPI](https://pypi.org/project/nonebot_plugin_wordbank/) 安装
 
 ``` {.sourceCode .bash}
-pip install nonebot-plugin-wordbank
+pip install nonebot_plugin_wordbank
 ```
 
 ## 配置项
