@@ -9,6 +9,14 @@
 
 ## 开始使用
 
+必须使用 pip
+
+- 通过 pip 从 [PyPI](https://pypi.org/project/nonebot_plugin_wordbank/) 安装
+
+``` {.sourceCode .bash}
+pip install nonebot-plugin-wordbank
+```
+
 ## 配置项
 
 ## 导出给其他插件
