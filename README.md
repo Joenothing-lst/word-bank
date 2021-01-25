@@ -17,9 +17,21 @@
 pip install nonebot-plugin-wordbank
 ```
 
-## 配置项
+## 使用方式
+
+- 问xxx答xxx
+- 模糊问xxx答xxx
+- 全局问xxx答xxx
+- 全局模糊问xxx答xxx
+- 删除词条xxx
 
 ## 导出给其他插件
+
+```python
+from nonebot import require
+
+wb = require("nonebot_plugin_wordbank").word_bank
+```
 
 ## 更新记录
 
