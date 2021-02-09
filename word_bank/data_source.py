@@ -1,13 +1,13 @@
 import json
 import os
-from typing import Union, List
+import re
+
+from typing import Optional, Union, List
 
 
-NULL_BANK = dict(congruence={
-    0: dict()
-}, include={
-    0: dict()
-})
+OPTIONS = ['congruence', 'include', 'regex']
+
+NULL_BANK = dict((option, {"0": {}}) for option in OPTIONS)
 
 
 class WordBank(object):
@@ -19,58 +19,82 @@ class WordBank(object):
         if os.path.exists(self.dir_path):
             print('读取词库位于 ' + self.data_path)
             with open(self.data_path, 'r', encoding='utf-8') as f:
-                self.__data = json.load(f)
+                data = json.load(f)
+            self.__data = {key: data.get(key) or {"0": {}} for key in NULL_BANK.keys()}
+
         else:
             os.mkdir(self.dir_path)
             print('创建词库位于 ' + self.data_path)
             self.__data = NULL_BANK
             self.__save()
 
-    def match(self, index: int, msg: str, flags: int = 0) -> Union[None, List]:
+    def match(self, index: Union[int, str], msg: str, flags: int = 0) -> Optional[List]:
         """
         匹配词条
 
         :param index: 为0时是全局词库
-        :param msg:
-        :param flags: 为1时为允许模糊匹配（in）， 默认为全匹配（==）
-        :return:
+        :param msg: 需要匹配的消息
+        :param flags:   0: 无限制（默认）
+                        1: 全匹配（==）
+                        2: 模糊匹配（in）
+                        3: 正则匹配（regex）
+        :return: 首先匹配成功的消息列表
         """
+        if flags:
+            return self._match(index, msg, flags)
+
+        else:
+            for type_ in range(1, len(self.__data)+1):
+                re_msg = self._match(index, msg, type_)
+                if re_msg:
+                    return re_msg
+
+    def _match(self, index: Union[int, str], msg: str, flags: int = 1) -> Optional[List]:
         if isinstance(index, int):
             index = str(index)
-        reply = self.__data['congruence'].get(index, {}).get(msg, []) \
-                or self.__data['congruence'].get('0', {}).get(msg, [])
 
-        if not flags or reply:
-            return reply
-        else:
-            for key in self.__data['include'].get(index, {}):
-                if key in msg:
-                    return self.__data['include'][index][key]
+        type_ = OPTIONS[flags-1]
+        bank = self.__data[type_].get(index, {}) or self.__data[type_].get("0", {})
 
-            for key in self.__data['include'].get('0', {}):
+        if flags == 1:
+            for key in bank:
+                if key == msg:
+                    return bank[key]
+
+        elif flags == 2:
+            for key in bank:
                 if key in msg:
-                    return self.__data['include']['0'][key]
+                    return bank[key]
+
+        elif flags == 3:
+            for key in bank:
+                try:
+                    if re.search(key, msg, re.S):
+                        return bank[key]
+                except re.error:
+                    pass
 
     def __save(self):
         """
         :return:
         """
         with open(self.data_path, 'w', encoding='utf-8') as f:
-            json.dump(self.__data, f)
+            json.dump(self.__data, f, ensure_ascii=False, indent=4)
 
-    def set(self, index: int, key: str, value: str, flags: int = 0) -> bool:
+    def set(self, index: Union[int, str], key: str, value: str, flags: int = 1) -> bool:
         """
         新增词条
 
         :param index: 为0时是全局词库
-        :param key:
-        :param value:
-        :param flags: 为1时是模糊匹配（in）， 默认为全匹配（==）
+        :param key: 触发短语
+        :param value: 触发后发送的短语
+        :param flags:   1: 全匹配（==）
+                        2: 模糊匹配（in）
+                        3: 正则匹配（regex）
         :return:
         """
         index = str(index)
-        options = ['congruence', 'include']
-        flag = options[flags]
+        flag = OPTIONS[flags-1]
 
         if self.__data[flag].get(index, {}):
             if self.__data[flag][index].get(key, []):
@@ -79,31 +103,30 @@ class WordBank(object):
                 self.__data[flag][index][key] = [value]
         else:
             self.__data[flag][index] = {key: [value]}
+
         self.__save()
         return True
 
-    def delete(self, index: int, key: str) -> bool:
+    def delete(self, index: Union[int, str], key: str) -> bool:
         """
         删除词条
 
         :param index: 为0时是全局词库
-        :param key:
+        :param key: 触发短语
         :return:
         """
         index = str(index)
-        if self.__data['congruence'].get(index, {}).get(key, False):
-            del self.__data['congruence'][index][key]
-            self.__save()
-            return True
+        flag = False
 
-        elif self.__data['include'].get(index, {}).get(key, False):
-            del self.__data['include'][index][key]
-            self.__save()
-            return True
+        for type_ in self.__data:
+            if self.__data[type_].get(index, {}).get(key, False):
+                del self.__data[type_][index][key]
+                flag = True
 
-        return False
+        self.__save()
+        return flag
 
-    def clean(self, index: int) -> bool:
+    def clean(self, index: Union[int, str]) -> bool:
         """
         清空某个对象的词库
 
@@ -111,11 +134,15 @@ class WordBank(object):
         :return:
         """
         index = str(index)
-        if self.__data.get(index, {}):
-            del self.__data[index]
-            self.__save()
-            return True
-        return False
+        flag = False
+
+        for type_ in self.__data:
+            if self.__data[type_].get(index, {}):
+                del self.__data[type_][index]
+                flag = True
+
+        self.__save()
+        return flag
 
     def _clean_all(self):
         """
