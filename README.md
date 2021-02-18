@@ -1,4 +1,34 @@
-# word_bank
+<!--
+ * @Author         : yanyongyu
+ * @Date           : 2020-11-15 14:40:25
+ * @LastEditors    : yanyongyu
+ * @LastEditTime   : 2020-11-15 15:07:47
+ * @Description    : None
+ * @GitHub         : https://github.com/yanyongyu
+-->
+
+<p align="center">
+  <a href="https://v2.nonebot.dev/"><img src="https://raw.githubusercontent.com/nonebot/nonebot2/master/docs/.vuepress/public/logo.png" width="200" height="200" alt="nonebot"></a>
+</p>
+
+<div align="center">
+
+# nonebot-plugin-wordbank
+
+_✨ 无数据库的轻量问答插件 ✨_
+
+</div>
+
+<p align="center">
+  <a href="https://github.com/Joenothing-lst/word-bank/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/Joenothing-lst/word-bank.svg" alt="license">
+  </a>
+  <a href="https://pypi.org/project/nonebot-plugin-wordbank/">
+    <img src="https://img.shields.io/pypi/v/nonebot-plugin-wordbank.svg" alt="pypi">
+  </a>
+  <img src="https://img.shields.io/badge/python-3.6+-blue.svg" alt="python">
+</p>
+
 
 - 基于[nonebot2](https://github.com/nonebot/nonebot2)
 
@@ -6,6 +36,8 @@
 
 - 无数据库的轻量问答插件
 - 支持模糊问答
+- 支持特殊回复
+- 自动转译CQ码
 
 ## 安装
 
