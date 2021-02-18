@@ -16,7 +16,7 @@ class WordBank(object):
         self.dir_path = os.path.abspath(os.path.join(__file__, "..", "data"))
         self.data_path = os.path.join(self.dir_path, "bank.json")
 
-        if os.path.exists(self.dir_path):
+        if os.path.exists(self.data_path):
             print('读取词库位于 ' + self.data_path)
             with open(self.data_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
