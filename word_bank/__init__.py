@@ -26,7 +26,7 @@ async def _(bot: Bot, event: MessageEvent):
     else:
         index = event.user_id
 
-    msgs = wb.match(index, event.raw_message)
+    msgs = wb.match(index, unescape(event.raw_message))
     if msgs:
         if reply_type == 'random':
             msg = Message(unescape(parse(msg=random.choice(msgs),
@@ -65,7 +65,7 @@ async def wb_set(bot: Bot, event: MessageEvent):
         type_ = 3 if '正则' in flag else 2 if '模糊' in flag else 1
 
         res = wb.set(0 if '全局' in flag else index,
-                     key,
+                     unescape(key),
                      value,
                      type_)
         if res:
@@ -83,7 +83,7 @@ async def wb_del_(bot: Bot, event: MessageEvent):
         index = event.user_id
 
     msg = str(event.message)
-    res = wb.delete(index, msg)
+    res = wb.delete(index, unescape(msg))
     if res:
         await bot.send(event, message='删除成功~')
 
@@ -95,7 +95,7 @@ wb_del_admin = on_command('删除全局词条', permission=SUPERUSER, )
 async def wb_del_admin_(bot: Bot, event: MessageEvent):
     msg = str(event.message).strip()
     if msg:
-        res = wb.delete(0, msg)
+        res = wb.delete(0, unescape(msg))
         if res:
             await bot.send(event, message='删除成功~')
 
@@ -142,7 +142,7 @@ async def wb_del_all_admin_(bot: Bot, event: MessageEvent, state: T_State):
 
 
 @wb_del_all_bank.got('is_sure', prompt='此命令将会清空您的全部词库，确定请发送 yes')
-async def wb_del_all_admin_(bot: Bot, event: MessageEvent, state: T_State):
+async def wb_del_all_bank_(bot: Bot, event: MessageEvent, state: T_State):
     if state['is_sure'] == 'yes':
         res = wb._clean_all()
 
