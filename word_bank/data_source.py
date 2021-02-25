@@ -50,16 +50,25 @@ class WordBank(object):
                     return re_msg
 
     def _match(self, index: Union[int, str], msg: str, flags: int = 1) -> Optional[List]:
+        """
+        匹配词条
+
+        :param index: 为0时是全局词库
+        :param msg: 需要匹配的消息
+        :param flags:   1: 全匹配（==）
+                        2: 模糊匹配（in）
+                        3: 正则匹配（regex）
+        :return: 首先匹配成功的消息列表
+        """
+
         if isinstance(index, int):
             index = str(index)
 
         type_ = OPTIONS[flags-1]
-        bank = self.__data[type_].get(index, {}) or self.__data[type_].get("0", {})
+        bank = dict(self.__data[type_].get(index, {}), **self.__data[type_].get("0", {}))
 
         if flags == 1:
-            for key in bank:
-                if key == msg:
-                    return bank[key]
+            return bank.get(msg, [])
 
         elif flags == 2:
             for key in bank:
@@ -72,7 +81,7 @@ class WordBank(object):
                     if re.search(key, msg, re.S):
                         return bank[key]
                 except re.error:
-                    pass
+                    print(f'正则匹配错误 - pattern: {key}, string: {msg}')
 
     def __save(self):
         """

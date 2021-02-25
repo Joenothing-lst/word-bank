@@ -1,12 +1,3 @@
-<!--
- * @Author         : yanyongyu
- * @Date           : 2020-11-15 14:40:25
- * @LastEditors    : yanyongyu
- * @LastEditTime   : 2020-11-15 15:07:47
- * @Description    : None
- * @GitHub         : https://github.com/yanyongyu
--->
-
 <p align="center">
   <a href="https://v2.nonebot.dev/"><img src="https://raw.githubusercontent.com/nonebot/nonebot2/master/docs/.vuepress/public/logo.png" width="200" height="200" alt="nonebot"></a>
 </p>
@@ -161,6 +152,11 @@ wb = require("nonebot_plugin_wordbank").export()
 ```
 
 ## 更新记录
+
+* V1.0.1
+    * 修复正则词条可能会被转义的bug。
+    * 修复全局词条可能不会正确响应的bug。
+    * 修复词库路径错误的bug。
 
 * V1.0.0
     * 修复了一些BUG，丰富了基础功能。
