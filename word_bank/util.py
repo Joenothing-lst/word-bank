@@ -1,5 +1,7 @@
 import re
 
+from typing import Optional
+
 
 def parse_cmd(pattern, msg: str) -> list:
     return re.findall(pattern, msg, re.S)
@@ -14,11 +16,20 @@ def parse_self(msg: str, **kwargs) -> str:
 
 
 def parse_at_self(msg: str, **kwargs) -> str:
-    if str(kwargs.get('sender_id', '')):
-        return re.sub(r'/atself', f"[CQ:at,qq={str(kwargs.get('sender_id', ''))}]", msg)
+    sender_id = kwargs.get('sender_id', '')
+    if sender_id:
+        return re.sub(r'/atself', f"[CQ:at,qq={sender_id}]", msg)
     else:
         return msg
 
 
-def parse(msg, **kwargs):
+def parse_ban(msg: str) -> Optional[int]:
+    matcher = re.findall(r'/ban([ \d]*)', msg)
+    if matcher:
+        duration = matcher[0]
+        # 默认 5 分钟
+        return int(duration.strip() or 300)
+
+
+def parse(msg, **kwargs) -> str:
     return parse_at(parse_self(msg, **kwargs))
