@@ -104,6 +104,9 @@ class WordBank(object):
         """
         index = str(index)
         flag = OPTIONS[flags-1]
+        
+        key = key.replace("\n", "")
+        value = value if value[0:1] != "\n" else value.replace("\n", "", 1)
 
         if self.__data[flag].get(index, {}):
             if self.__data[flag][index].get(key, []):
