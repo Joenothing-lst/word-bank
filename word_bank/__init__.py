@@ -88,7 +88,7 @@ async def wb_set(bot: Bot, event: MessageEvent):
         index = event.user_id
 
     msg = event.raw_message
-    kv = parse_cmd(r"([模糊全局正则]*)问(.+?)答(.+)", msg)
+    kv = parse_cmd(r"([模糊全局正则]*)问\s?(.+?)\s?答\s?(.+)", msg)
 
     if kv:
         flag, key, value = kv[0]
