@@ -1,16 +1,19 @@
 import random
+from nonebot.params import State
 
-from nonebot import on_command, on_message, on_regex, export
+from nonebot import export, on_command, on_message, on_regex
+from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, MessageEvent
+from nonebot.adapters.onebot.v11.permission import (
+    GROUP_ADMIN,
+    GROUP_OWNER,
+    PRIVATE_FRIEND,
+)
+from nonebot.adapters.onebot.v11.utils import unescape
 from nonebot.permission import SUPERUSER
 from nonebot.typing import T_State
-from nonebot.adapters.cqhttp.bot import Bot
-from nonebot.adapters.cqhttp.message import Message
-from nonebot.adapters.cqhttp.event import MessageEvent, GroupMessageEvent
-from nonebot.adapters.cqhttp.utils import unescape
-from nonebot.adapters.cqhttp.permission import GROUP_OWNER, GROUP_ADMIN, PRIVATE_FRIEND
 
 from .data_source import word_bank as wb
-from .util import parse, parse_cmd, parse_ban
+from .util import parse_ban_msg, parse_ban_time, parse_cmd, parse_msg
 
 reply_type = "random"
 
@@ -20,58 +23,50 @@ wb_matcher = on_message(priority=99)
 
 
 @wb_matcher.handle()
-async def _(bot: Bot, event: MessageEvent):
+async def handle_wb(bot: Bot, event: MessageEvent):
     if isinstance(event, GroupMessageEvent):
         index = event.group_id
     else:
         index = event.user_id
 
     msgs = wb.match(index, unescape(event.raw_message))
-    if msgs:
-        if reply_type == "random":
-            msg = random.choice(msgs)
+    if msgs and reply_type == "random":
 
-            duration = parse_ban(msg)
-            if duration and isinstance(event, GroupMessageEvent):
-                await bot.set_group_ban(
-                    group_id=event.group_id, user_id=event.user_id, duration=duration
-                )
+        msg = random.choice(msgs)
+        duration = parse_ban_time(msg)
 
-            await bot.send(
-                event,
-                message=Message(
-                    unescape(
-                        parse(
-                            msg=msg,
-                            nickname=event.sender.card or event.sender.nickname,
-                            sender_id=event.sender.user_id,
-                        )
-                    )
-                ),
+        if duration and isinstance(event, GroupMessageEvent):
+            msg = parse_ban_msg(msg)
+            await bot.set_group_ban(
+                group_id=event.group_id, user_id=event.user_id, duration=duration
             )
 
-        else:
-            for msg in msgs:
-                duration = parse_ban(msg)
-                if duration and isinstance(event, GroupMessageEvent):
-                    await bot.set_group_ban(
-                        group_id=event.group_id,
-                        user_id=event.user_id,
-                        duration=duration,
-                    )
+        await wb_matcher.finish(
+            parse_msg(
+                msg=msg,
+                nickname=event.sender.card or event.sender.nickname,
+                sender_id=event.sender.user_id,
+            )
+        )
 
-                await bot.send(
-                    event,
-                    message=Message(
-                        unescape(
-                            parse(
-                                msg=msg,
-                                nickname=event.sender.card or event.sender.nickname,
-                                sender_id=event.sender.user_id,
-                            )
-                        )
-                    ),
+    else:
+        for msg in msgs:
+            duration = parse_ban_time(msg)
+            if duration and isinstance(event, GroupMessageEvent):
+                msg = parse_ban_msg(msg)
+                await bot.set_group_ban(
+                    group_id=event.group_id,
+                    user_id=event.user_id,
+                    duration=duration,
                 )
+
+            await wb_matcher.finish(
+                parse_msg(
+                    msg=msg,
+                    nickname=event.sender.card or event.sender.nickname,
+                    sender_id=event.sender.user_id,
+                ),
+            )
 
 
 wb_set_cmd = on_regex(
@@ -81,7 +76,8 @@ wb_set_cmd = on_regex(
 
 
 @wb_set_cmd.handle()
-async def wb_set(bot: Bot, event: MessageEvent):
+async def wb_set(event: MessageEvent):
+
     if isinstance(event, GroupMessageEvent):
         index = event.group_id
     else:
@@ -95,8 +91,9 @@ async def wb_set(bot: Bot, event: MessageEvent):
         type_ = 3 if "正则" in flag else 2 if "模糊" in flag else 1
 
         res = wb.set(0 if "全局" in flag else index, unescape(key), value, type_)
+
         if res:
-            await bot.send(event, message="我记住了~")
+            await wb_set_cmd.finish(message="我记住了~")
 
 
 wb_del_cmd = on_command(
@@ -106,7 +103,7 @@ wb_del_cmd = on_command(
 
 
 @wb_del_cmd.handle()
-async def wb_del_(bot: Bot, event: MessageEvent):
+async def wb_del_(event: MessageEvent):
     if isinstance(event, GroupMessageEvent):
         index = event.group_id
     else:
@@ -115,7 +112,7 @@ async def wb_del_(bot: Bot, event: MessageEvent):
     msg = str(event.message)
     res = wb.delete(index, unescape(msg))
     if res:
-        await bot.send(event, message="删除成功~")
+        await wb_del_cmd.finish(message="删除成功~")
 
 
 wb_del_admin = on_command(
@@ -125,15 +122,15 @@ wb_del_admin = on_command(
 
 
 @wb_del_admin.handle()
-async def wb_del_admin_(bot: Bot, event: MessageEvent):
+async def wb_del_admin_(event: MessageEvent):
     msg = str(event.message).strip()
     if msg:
         res = wb.delete(0, unescape(msg))
         if res:
-            await bot.send(event, message="删除成功~")
+            await wb_del_admin.finish(message="删除成功~")
 
 
-async def wb_del_all(bot: Bot, event: MessageEvent, state: T_State):
+async def wb_del_all(event: MessageEvent, state: T_State = State()):
     msg = str(event.message).strip()
     if msg:
         state["is_sure"] = msg
@@ -147,7 +144,7 @@ wb_del_all_bank = on_command("删除全部词库", permission=SUPERUSER, handler
 
 
 @wb_del_all_cmd.got("is_sure", prompt="此命令将会清空您的群聊/私人词库，确定请发送 yes")
-async def wb_del_all_(bot: Bot, event: MessageEvent, state: T_State):
+async def wb_del_all_(event: MessageEvent, state: T_State = State()):
     if state["is_sure"] == "yes":
 
         if isinstance(event, GroupMessageEvent):
@@ -165,19 +162,19 @@ async def wb_del_all_(bot: Bot, event: MessageEvent, state: T_State):
 
 
 @wb_del_all_admin.got("is_sure", prompt="此命令将会清空您的全局词库，确定请发送 yes")
-async def wb_del_all_admin_(bot: Bot, event: MessageEvent, state: T_State):
+async def wb_del_all_admin_(event: MessageEvent, state: T_State = State()):
     if state["is_sure"] == "yes":
         res = wb.clean(0)
 
         if res:
-            await bot.send(event, message="删除全局词库成功~")
+            await wb_del_all_admin.finish(message="删除全局词库成功~")
 
     else:
         await wb_del_all_admin.finish("命令取消")
 
 
 @wb_del_all_bank.got("is_sure", prompt="此命令将会清空您的全部词库，确定请发送 yes")
-async def wb_del_all_bank_(bot: Bot, event: MessageEvent, state: T_State):
+async def wb_del_all_bank_(bot: Bot, event: MessageEvent, state: T_State = State()):
     if state["is_sure"] == "yes":
         res = wb._clean_all()
 

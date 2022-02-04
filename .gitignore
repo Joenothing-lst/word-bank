@@ -130,3 +130,9 @@ dmypy.json
 
 # plugin data
 data/*.json
+
+# DS_Store
+*.DS_Store
+
+# lock
+poetry.lock

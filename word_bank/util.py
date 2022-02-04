@@ -1,6 +1,8 @@
 import re
 
 from typing import Optional
+from nonebot.adapters.onebot.v11 import Message
+from nonebot.adapters.onebot.v11.utils import unescape
 
 
 def parse_cmd(pattern, msg: str) -> list:
@@ -25,7 +27,7 @@ def parse_at_self(msg: str, **kwargs) -> str:
         return msg
 
 
-def parse_ban(msg: str) -> Optional[int]:
+def parse_ban_time(msg: str) -> Optional[int]:
     matcher = re.findall(r"/ban([ \d]*)", msg)
     if matcher:
         duration = matcher[0]
@@ -33,5 +35,9 @@ def parse_ban(msg: str) -> Optional[int]:
         return int(duration.strip() or 300)
 
 
-def parse(msg, **kwargs) -> str:
-    return parse_at(parse_self(msg, **kwargs))
+def parse_ban_msg(msg: str) -> str:
+    return re.sub(r"/ban[ \d]*", "", msg)
+
+
+def parse_msg(msg, **kwargs) -> Message:
+    return Message(unescape(parse_at(parse_self(msg, **kwargs))))

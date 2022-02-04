@@ -3,7 +3,8 @@ import os
 import re
 
 from typing import Optional, Union, List
-
+from pathlib import Path
+from nonebot.log import logger
 
 OPTIONS = ["congruence", "include", "regex"]
 
@@ -12,20 +13,22 @@ NULL_BANK = dict((option, {"0": {}}) for option in OPTIONS)
 
 class WordBank(object):
     def __init__(self):
-        self.dir_path = os.path.abspath(os.path.join(__file__, "..", "data"))
-        self.data_path = os.path.join(self.dir_path, "bank.json")
+        self.data_dir = Path("./").absolute()
+        self.bank_path = self.data_dir / "bank.json"
+        self.pic_dir = self.data_dir / "pic"
+        self.load_bank()
 
-        if os.path.exists(self.data_path):
-            print("读取词库位于 " + self.data_path)
-            with open(self.data_path, "r", encoding="utf-8") as f:
+    def load_bank(self):
+        if os.path.exists(self.data_dir) and os.path.isfile(self.bank_path):
+            with open(self.bank_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+            logger.success("读取词库位于 " + self.bank_path)
             self.__data = {key: data.get(key) or {"0": {}} for key in NULL_BANK.keys()}
-
         else:
-            os.mkdir(self.dir_path)
-            print("创建词库位于 " + self.data_path)
+            os.makedirs(self.data_dir, exist_ok=False)
             self.__data = NULL_BANK
             self.__save()
+            logger.success("创建词库位于 " + self.bank_path)
 
     def match(self, index: Union[int, str], msg: str, flags: int = 0) -> Optional[List]:
         """
@@ -33,10 +36,10 @@ class WordBank(object):
 
         :param index: 为0时是全局词库
         :param msg: 需要匹配的消息
-        :param flags:   0: 无限制（默认）
-                        1: 全匹配（==）
-                        2: 模糊匹配（in）
-                        3: 正则匹配（regex）
+        :param flags:   0: 无限制(默认)
+                        1: 全匹配(==)
+                        2: 模糊匹配(in)
+                        3: 正则匹配(regex)
         :return: 首先匹配成功的消息列表
         """
         if flags:
@@ -56,9 +59,9 @@ class WordBank(object):
 
         :param index: 为0时是全局词库
         :param msg: 需要匹配的消息
-        :param flags:   1: 全匹配（==）
-                        2: 模糊匹配（in）
-                        3: 正则匹配（regex）
+        :param flags:   1: 全匹配(==)
+                        2: 模糊匹配(in)
+                        3: 正则匹配(regex)
         :return: 首先匹配成功的消息列表
         """
 
@@ -100,9 +103,9 @@ class WordBank(object):
         :param index: 为0时是全局词库
         :param key: 触发短语
         :param value: 触发后发送的短语
-        :param flags:   1: 全匹配（==）
-                        2: 模糊匹配（in）
-                        3: 正则匹配（regex）
+        :param flags:   1: 全匹配(==)
+                        2: 模糊匹配(in)
+                        3: 正则匹配(regex)
         :return:
         """
         index = str(index)
