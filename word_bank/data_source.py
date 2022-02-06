@@ -1,10 +1,18 @@
 import json
 import os
 import re
-
-from typing import Optional, Union, List
 from pathlib import Path
+from typing import List, Optional, Union
+
+import aiofiles as aio
 from nonebot.log import logger
+from nonebot.adapters.onebot.v11 import Message
+from .util import (
+    get_img,
+    load_image,
+    file_list_add_path,
+    parse_all_msg,
+)
 
 OPTIONS = ["congruence", "include", "regex"]
 
@@ -13,22 +21,31 @@ NULL_BANK = dict((option, {"0": {}}) for option in OPTIONS)
 
 class WordBank(object):
     def __init__(self):
-        self.data_dir = Path("./").absolute()
+        self.data_dir = Path("./").absolute() / "data" / "word_bank"
         self.bank_path = self.data_dir / "bank.json"
-        self.pic_dir = self.data_dir / "pic"
+        self._img_dir = self.data_dir / "img"
         self.load_bank()
 
+    @property
+    def img_dir(self):
+        return self._img_dir
+
     def load_bank(self):
-        if os.path.exists(self.data_dir) and os.path.isfile(self.bank_path):
+        if (
+            os.path.exists(self.data_dir)
+            and os.path.isfile(self.bank_path)
+            and os.path.exists(self.img_dir)
+        ):
             with open(self.bank_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            logger.success("读取词库位于 " + self.bank_path)
+            logger.success("读取词库位于 " + str(self.bank_path))
             self.__data = {key: data.get(key) or {"0": {}} for key in NULL_BANK.keys()}
         else:
-            os.makedirs(self.data_dir, exist_ok=False)
+            os.makedirs(self.data_dir, exist_ok=True)
+            os.makedirs(self.img_dir, exist_ok=True)
             self.__data = NULL_BANK
             self.__save()
-            logger.success("创建词库位于 " + self.bank_path)
+            logger.success("创建词库位于 " + str(self.bank_path))
 
     def match(self, index: Union[int, str], msg: str, flags: int = 0) -> Optional[List]:
         """
@@ -42,6 +59,9 @@ class WordBank(object):
                         3: 正则匹配(regex)
         :return: 首先匹配成功的消息列表
         """
+        # 去除末尾的空白字符
+        msg = re.sub(r"\s*?$", "", msg)
+
         if flags:
             return self._match(index, msg, flags)
 
@@ -87,13 +107,13 @@ class WordBank(object):
                     if re.search(key, msg, re.S):
                         return bank[key]
                 except re.error:
-                    print(f"正则匹配错误 - pattern: {key}, string: {msg}")
+                    logger.error(f"正则匹配错误 - pattern: {key}, string: {msg}")
 
     def __save(self):
         """
         :return:
         """
-        with open(self.data_path, "w", encoding="utf-8") as f:
+        with open(self.bank_path, "w", encoding="utf-8") as f:
             json.dump(self.__data, f, ensure_ascii=False, indent=4)
 
     def set(self, index: Union[int, str], key: str, value: str, flags: int = 1) -> bool:
@@ -110,6 +130,8 @@ class WordBank(object):
         """
         index = str(index)
         flag = OPTIONS[flags - 1]
+
+        logger.debug(f"{index} {key} {value} {flags}")
 
         if self.__data[flag].get(index, {}):
             if self.__data[flag][index].get(key, []):
@@ -168,6 +190,42 @@ class WordBank(object):
         self.__data = NULL_BANK
         self.__save()
         return True
+
+    async def save_img(self, img: bytes, filename: str) -> None:
+        async with aio.open(str(self.img_dir / filename), "wb") as f:
+            await f.write(img)
+
+    async def load_img(self, filename: str) -> bytes:
+        async with aio.open(str(self.img_dir / filename), "rb") as f:
+            return await f.read()
+
+    async def convert_and_save_img(self, img_list: list, raw_message: str) -> str:
+        """将图片保存,并将图片替换为图片名字
+
+        Args:
+            img_list (list): Meassage 中所有的图片列表 [{"url": "http://xxx", "filename": "xxx.image"}]
+            raw_message (str): [event.raw_message
+
+        Returns:
+            str: 转换后的raw_message
+        """
+        # 保存图片
+        for img in img_list:
+            res = await get_img(img["url"])
+            await self.save_img(res.content, img["file"])
+        # 将图片的位置替换为 /img xxx.image
+        return re.sub(
+            r"\[CQ:image.*?file=(.*).image.*?]", r"/img \1.image", raw_message
+        )
+
+    async def parse_msg(self, msg, **kwargs) -> Message:
+        img_dir_list = file_list_add_path(
+            re.findall(r"/img (.*?.image)", msg), self._img_dir
+        )
+        file_list = await load_image(img_dir_list)
+        # msg = re.sub(r"/img (.*?).image", "{:image}", msg)
+        msg, at = parse_all_msg(msg, **kwargs)
+        return Message.template(msg).format(*file_list, **at, **kwargs)
 
 
 word_bank = WordBank()
