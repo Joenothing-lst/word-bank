@@ -100,3 +100,9 @@ def parse_all_msg(msg, **kwargs) -> tuple[str, dict]:
     b, at = parse_at(a)
     c = parse_img(b)
     return (c, at)
+
+def remove_spaces(msg:str) -> str:
+    """去除首尾空白字符"""
+    msg = re.sub(r"^(\s*)?", "", msg)
+    msg = re.sub(r"(\s*)?$", "", msg)
+    return msg

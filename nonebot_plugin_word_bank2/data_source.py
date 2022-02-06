@@ -5,14 +5,10 @@ from pathlib import Path
 from typing import List, Optional, Union
 
 import aiofiles as aio
-from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import Message
-from .util import (
-    get_img,
-    load_image,
-    file_list_add_path,
-    parse_all_msg,
-)
+from nonebot.log import logger
+
+from .util import file_list_add_path, get_img, load_image, parse_all_msg, remove_spaces
 
 OPTIONS = ["congruence", "include", "regex"]
 
@@ -59,8 +55,7 @@ class WordBank(object):
                         3: 正则匹配(regex)
         :return: 首先匹配成功的消息列表
         """
-        # 去除末尾的空白字符
-        msg = re.sub(r"\s*?$", "", msg)
+        msg = remove_spaces(msg)
 
         if flags:
             return self._match(index, msg, flags)
@@ -130,6 +125,9 @@ class WordBank(object):
         """
         index = str(index)
         flag = OPTIONS[flags - 1]
+
+        key = remove_spaces(key)
+        value = remove_spaces(value)
 
         logger.debug(f"{index} {key} {value} {flags}")
 
