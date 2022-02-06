@@ -4,6 +4,8 @@ version = "0.0.1"
 description = "无数据问答插件"
 authors = ["kexue <x@kexue.io>"]
 license = "GPL-3.0"
+homepage = "https://github.com/kexue-z/nonebot-plugin-word-bank2"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.7.3"
