@@ -18,7 +18,7 @@ _✨ 无数据库的轻量问答插件 ✨_
 # 安装
 
 ```
-pip install nonebot-plugin-wordbank2
+pip install nonebot-plugin-word-bank2
 ```
 
 
