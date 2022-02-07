@@ -6,6 +6,29 @@ _✨ 无数据库的轻量问答插件 ✨_
 
 </div>
 
+# !!! 注意
+
+由于 [#770](https://github.com/nonebot/nonebot2/issues/770)
+
+因此需要改动nonebot bata1的源码才能正常使用 发送图片功能
+
+`...site-packages/nonebot/adapters/_template.py`
+
+`L178`从
+
+```py
+if inspect.ismethod(method):
+                formatter = getattr(segment_class, format_spec)
+        return (
+```
+改为
+
+```py
+if callable(method):
+                formatter = getattr(segment_class, format_spec)
+        return (
+```
+
 # 功能
 
 - 无数据库的轻量问答插件

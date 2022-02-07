@@ -12,11 +12,11 @@ def parse_cmd(pattern, msg: str) -> list:
 
 
 def parse_at(msg: str) -> tuple[str, dict]:
-    matcher = re.findall(r"/at ?([0-9]*)", msg)
+    matcher = re.findall(r"/at\s?([0-9]*)", msg)
     qq_dict = {}
     for qq in matcher:
         qq_dict[f"qq{qq}"] = qq
-    msg = re.sub(r"/at ?([0-9]*)", r"{qq\1:at}", msg)
+    msg = re.sub(r"/at\s?([0-9]*)", r"{qq\1:at}", msg)
     return (msg, qq_dict)
 
 
@@ -35,7 +35,7 @@ def parse_at_self(msg: str, **kwargs) -> str:
 
 
 def parse_ban_time(msg: str) -> Optional[int]:
-    matcher = re.findall(r"/ban([ \d]*)", msg)
+    matcher = re.findall(r"/ban\s?(\d*)", msg)
     if matcher:
         duration = matcher[0]
         # 默认 5 分钟
@@ -43,7 +43,7 @@ def parse_ban_time(msg: str) -> Optional[int]:
 
 
 def parse_ban_msg(msg: str) -> str:
-    return re.sub(r"/ban[ \d]*", "", msg)
+    return re.sub(r"/ban\s?(\d*)", "", msg)
 
 
 def parse_img(msg: str) -> str:
@@ -101,7 +101,8 @@ def parse_all_msg(msg, **kwargs) -> tuple[str, dict]:
     c = parse_img(b)
     return (c, at)
 
-def remove_spaces(msg:str) -> str:
+
+def remove_spaces(msg: str) -> str:
     """去除首尾空白字符"""
     msg = re.sub(r"^(\s*)?", "", msg)
     msg = re.sub(r"(\s*)?$", "", msg)
